@@ -74,12 +74,13 @@ end
 
 -- OnInitialize Handler
 function DebugWindow.Initialize()
+  --DebugWindow.RegisterHandleSpy()
+
 
 
 
     -- Setup the Log
     DebugWindow.UpdateLog()
-    DebugWindow.RegisterHandleSpy()
 
 
 
@@ -173,6 +174,7 @@ function DebugWindow.Initialize()
     if( DebugWindow.history ) then
         TextEditBoxSetHistory("DebugWindowTextBox", DebugWindow.history )
       end
+    DebugWindow.SpyCheck()
 end
 
 
@@ -381,6 +383,8 @@ end
 -----------REGISTER EVENT SPY---------------
   function DebugWindow.RegisterHandleSpy()
     for k,v in pairs(DebugWindow.spyfilter) do
+      DebugWindow.registeredevents[k]=v end
+    for k,v in pairs(DebugWindow.registeredevents) do
         _G["EventDebug_" .. k] = function(...)
         eve(k .. ": " .. DebugWindow.tableConcat({...}, ", ")) end
   end
@@ -393,14 +397,29 @@ for k in pairs (DebugWindow.registeredevents) do
 end
 end
 
+function DebugWindow.SpyCheck()
+if DebugWindow.registeredevents == nil then return end
+if next(DebugWindow.registeredevents) ~= nil then
+  for k,v in pairs(DebugWindow.registeredevents) do
+      _G["EventDebug_" .. k] = function(...)
+      eve(k .. ": " .. DebugWindow.tableConcat({...}, ", ")) end
+    end
+  end
+        for k,v in pairs(DebugWindow.registeredevents) do
+          if k ~= "UPDATE_PROCESSED"  and k ~="PLAYER_POSITION_UPDATED" then
+          RegisterEventHandler(DebugWindow.registeredevents[k], "EventDebug_" .. k)
+      end
+    end
+end
+
 
 function DebugWindow.Spy()
   if next(DebugWindow.registeredevents) ~= nil then
-          pp("You are already spying.") return end
-      for k,v in pairs(DebugWindow.spyfilter) do
+    pp("You are already spying.") return end
+    DebugWindow.RegisterHandleSpy()
+            for k,v in pairs(DebugWindow.registeredevents) do
               if k ~= "UPDATE_PROCESSED"  and k ~="PLAYER_POSITION_UPDATED" then
-              RegisterEventHandler(DebugWindow.spyfilter[k], "EventDebug_" .. k)
-              table.insert(DebugWindow.registeredevents, v, k)
+              RegisterEventHandler(DebugWindow.registeredevents[k], "EventDebug_" .. k)
           end
       end
         pp(L"Starting Event Spy")
@@ -412,12 +431,12 @@ function DebugWindow.SpyStop()
     if next(DebugWindow.registeredevents) == nil then
             pp("You are not spying anything.")
       elseif DebugWindow.registeredevents ~= nil then
-        for k in pairs(DebugWindow.spyfilter) do
+        for k,v in pairs(DebugWindow.registeredevents) do
             if k ~="PLAYER_POSITION_UPDATED" and k ~= "UPDATE_PROCESSED" then
-              UnregisterEventHandler(DebugWindow.spyfilter[k], "EventDebug_" .. k)
+              UnregisterEventHandler(DebugWindow.registeredevents[k], "EventDebug_" .. k)
             end
-            DebugWindow.TableClear()
         end
+        DebugWindow.TableClear()
         pp(L"Stopping Event Spy")
     end
 end
