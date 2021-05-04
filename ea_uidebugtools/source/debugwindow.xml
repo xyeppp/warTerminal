@@ -7,7 +7,7 @@
     <Windows>
 
 
-        <Window name="LogFilterButton" inherits="EA_LabelCheckButton" id="1">
+        <Window name="LogFilterButton" inherits="EA_LabelCheckButtonSmallCopy" id="1" >
             <EventHandlers>
                 <EventHandler event="OnLButtonUp" function="DebugWindow.UpdateDisplayFilter" />
             </EventHandlers>
@@ -56,7 +56,7 @@
 
 	                    <Windows>
 
-                        <VerticalScrollbar name="$parentScrollbar" inherits="EA_ScrollBar_ChatVertical">
+                        <VerticalScrollbar name="$parentScrollbar" inherits="EA_ScrollBar_ChatVertical" alpha="0.85">
                             <Anchors>
                                 <Anchor point="bottomright" relativePoint="bottomleft">
                                     <AbsPoint x="-24" y="-28" />
@@ -96,7 +96,7 @@
                     </Anchors>
                 </Window>
 
-                <EditBox name="$parentTextBox" inherits="EA_EditBox_DefaultFrame" taborder="1" history="30" font="font_clear_small_bold" alpha="0.85">
+                <EditBox name="$parentTextBox" inherits="EA_EditBox_DefaultFrame" maxchars="10240" history="30" font="font_clear_small_bold" alpha="0.85">
                   <Anchors>
                       <Anchor point="topleft" relativePoint="topleft" relativeTo="$parentLogDisplaySeperator">
                       <AbsPoint x="8" y="18" />
@@ -108,7 +108,8 @@
                   <EventHandlers>
                     <EventHandler event="OnKeyEnter" function="DebugWindow.TextSend" />
                     <EventHandler event="OnKeyEscape" function="DebugWindow.TextClear" />
-
+                    <EventHandler event="OnTextChanged" function="DebugWindow.AutoSender" />
+                    <EventHandler event="OnShown" function="DebugWindow.OnShowFocus" />
                   </EventHandlers>
                 </EditBox>
 
@@ -248,15 +249,19 @@
 
 
         <!--- Options Window -->
-        <Window name="DebugWindowOptions" layer="overlay" movable="false" >
+        <Window name="DebugWindowOptions" layer="overlay" movable="false" alpha="0.85">
             <Size>
-                <AbsPoint x="340" y="550" />
+                <AbsPoint x="310" y="500" />
             </Size>
             <Anchors>
                 <Anchor point="right" relativePoint="right" relativeTo="DebugWindow">
-                    <AbsPoint x="340" y="-5"/>
+                    <AbsPoint x="310" y="-5"/>
                 </Anchor>
             </Anchors>
+            <EventHandlers>
+              <EventHandler event="OnShown" function="DebugWindow.OnShowFocus" />
+                <EventHandler event="OnHidden" function="DebugWindow.OnShowFocus" />
+            </EventHandlers>
             <Windows>
 
                 <Window name="$parentBackground" inherits="EA_Window_DefaultFrame" >
@@ -277,7 +282,7 @@
                     </EventHandlers>
                     <Anchors>
                     <Anchor point="bottomright" relativePoint="bottomright" relativeTo="">
-                        <AbsPoint x="0" y="-15" />
+                        <AbsPoint x="0" y="-12" />
                     </Anchor>
                     </Anchors>
                 </Button>
@@ -297,7 +302,7 @@
                 </Button>
                 <Label name="$parentFiltersTitle" inherits="EA_Settings_SectionTitle" font="font_clear_small_bold" textalign="left">
                     <Size>
-                        <AbsPoint x="400" y="20" />
+                        <AbsPoint x="400" y="15" />
                     </Size>
                     <Anchors>
                         <Anchor point="topleft" relativePoint="topleft" relativeTo="$parent">
@@ -308,7 +313,7 @@
                 <Window name="$parentFilterType1" font="font_clear_small_bold" inherits="LogFilterButton" id="1">
                     <Anchors>
                         <Anchor point="bottomleft" relativePoint="topleft" relativeTo="$parentFiltersTitle">
-                            <AbsPoint x="20" y="14" />
+                            <AbsPoint x="20" y="15" />
                         </Anchor>
                     </Anchors>
                 </Window>
@@ -375,11 +380,11 @@
                     </Size>
                     <Anchors>
                       <Anchor point="topleft" relativePoint="topleft" relativeTo="$parent">
-                          <AbsPoint x="25" y="352" />
+                          <AbsPoint x="25" y="320" />
                       </Anchor>
                     </Anchors>
                 </Label>
-                <Window name="$parentErrorOption1" inherits="EA_LabelCheckButton" font="font_clear_small_bold" id="1">
+                <Window name="$parentErrorOption1" inherits="EA_LabelCheckButtonSmallCopy" id="1">
                     <Anchors>
                         <Anchor point="bottomleft" relativePoint="topleft" relativeTo="$parentErrorHandlingTitle">
                             <AbsPoint x="20" y="8" />
@@ -389,7 +394,7 @@
                         <EventHandler event="OnLButtonUp" function="DebugWindow.UpdateLuaErrorHandling" />
                     </EventHandlers>
                 </Window>
-                <Window name="$parentErrorOption2" inherits="EA_LabelCheckButton" font="font_clear_small_bold" id="1">
+                <Window name="$parentErrorOption2" inherits="EA_LabelCheckButtonSmallCopy" id="1">
                     <Anchors>
                         <Anchor point="bottomleft" relativePoint="topleft" relativeTo="$parentErrorOption1">
                             <AbsPoint x="0" y="0" />
@@ -400,7 +405,7 @@
                     </EventHandlers>
                 </Window>
 
-                <Window name="$parentLuaDebugLibrary" inherits="EA_LabelCheckButton" font="font_clear_small_bold"  id="1">
+                <Window name="$parentLuaDebugLibrary" inherits="EA_LabelCheckButtonSmallCopy" id="1">
                     <Anchors>
                         <Anchor point="bottomleft" relativePoint="topleft" relativeTo="$parentErrorOption2">
                             <AbsPoint x="0" y="14" />
@@ -411,8 +416,31 @@
                     </EventHandlers>
                 </Window>
 
+                <Window name="EA_LabelCheckButtonSmallCopy" inherits="EA_LabelCheckButton" showing="false">
+                    <Size>
+                        <AbsPoint x="280" y="28" />
+                    </Size>
+                    <Windows>
+                        <Button name="$parentButton" inherits="EA_CheckButtonButton" />
+                        <Label name="$parentLabel" inherits="EA_CheckButtonLabel" handleinput="false" textAutoFitMinScale="0.5" font="font_clear_small_bold">
+                            <Size>
+                                <AbsPoint x="255" y="28" />
+                            </Size>.
+                        </Label>
+                    </Windows>
+                </Window>
+
+
+
+
+
+
+
+
             </Windows>
         </Window>
 
         </Windows>
+
+
 </Interface>

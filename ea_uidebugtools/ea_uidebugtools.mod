@@ -19,7 +19,7 @@
             <SavedVariable name="DebugWindow.Settings" />
             <SavedVariable name="DebugWindow.history" />
             <SavedVariable name="DebugWindow.RegisteredFunctionList" />
-            <SavedVariable name="DebugWindow.registeredevents" />
+            <SavedVariable name="RegisteredEvents" />
         </SavedVariables>
         <OnShutdown>
             <CallFunction name="DebugWindow.Shutdown" />

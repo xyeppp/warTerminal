@@ -6,13 +6,14 @@
 DebugWindow = {}
 DebugWindow.history = {}
 DebugWindow.spyfilter = SystemData.Events
-DebugWindow.registeredevents = {}
+RegisteredEvents = {}
 DebugWindow.RegisteredFunctionList = {}
 DebugWindow.Settings =
 {
     logsOn = true,
     useDevErrorHandling = true,
     loadLuaDebugLibrary = false
+
 }
 
 DebugWindow.Settings.LogFilters = {}
@@ -72,16 +73,15 @@ local function UpdateLoggingButton ()
 
 end
 
+
 -- OnInitialize Handler
 function DebugWindow.Initialize()
-  --DebugWindow.RegisterHandleSpy()
-
 
 
 
     -- Setup the Log
     DebugWindow.UpdateLog()
-
+    DebugWindow.SpyCheck()
 
 
 
@@ -166,6 +166,7 @@ function DebugWindow.Initialize()
 
     ButtonSetText( "DebugWindowOptionsClearLogText", L"Clear Log" )
     WindowSetShowing("DebugWindowOptionsFilterType10", false)
+    WindowSetShowing("EA_LabelCheckButtonSmallCopy", false)
 
     WindowSetShowing("DebugWindowOptions", false )
 
@@ -174,7 +175,7 @@ function DebugWindow.Initialize()
     if( DebugWindow.history ) then
         TextEditBoxSetHistory("DebugWindowTextBox", DebugWindow.history )
       end
-    DebugWindow.SpyCheck()
+
 end
 
 
@@ -215,8 +216,10 @@ function DebugWindow.ToggleLogging()
     DebugWindow.Settings.logsOn = not DebugWindow.Settings.logsOn
 
     if( DebugWindow.Settings.logsOn ) then
+        DebugWindow.OnShowFocus()
         CHAT_DEBUG( L" UI Logging: ON" )
     else
+        DebugWindow.OnShowFocus()
         CHAT_DEBUG( L" UI Logging: OFF" )
     end
 
@@ -328,15 +331,22 @@ function DebugWindow.UpdateLoadLuaDebugLibrary()
 end
 
 
+
+-----------------CHAT HISTORY-----------------
 function DebugWindow.AddInputHistory()
   table.insert(DebugWindow.history, text)
 end
 
+
+------------SCROLL TO BOTTOM----------------------
 function DebugWindow.ScrollToBottom ()
     LogDisplayScrollToBottom ("DebugWindowText")
+    WindowAssignFocus("DebugWindowTextBox", true)
 end
 
 
+
+---------------------MAIN CHAT SEND-----------------
 function DebugWindow.TextSend()
   text = towstring(TextEditBoxGetText(SystemData.ActiveWindow.name))
     if text == L"" then
@@ -344,104 +354,174 @@ function DebugWindow.TextSend()
     elseif text == L"h" then
       DebugWindow.TextSender()
       DebugWindow.help()
-    elseif text == L"reg" then
-      DebugWindow.TextSender()
-      DebugWindow.RegisterFunctions()
     elseif text == L"r" then
       InterfaceCore.ReloadUI()
     elseif text == L"f" then
       DebugWindow.TextSender()
       functionlist()
-    elseif text == L"ff" then
-      DebugWindow.TextSender()
-      DebugWindow.RegisteredList()
-    elseif text == L"ror" then
-      DebugWindow.TextSender()
-      DebugWindow.ror()
     elseif text == L"e" then
       DebugWindow.TextSender()
       DebugWindow.EventList()
     elseif text == L"s" then
       DebugWindow.TextSender()
       DebugWindow.Spy()
-    elseif text == L"ss" then
-      DebugWindow.TextSender()
-      DebugWindow.SpyStop()
-  --  elseif text == string.match("hw", tostring(text)) then
-  --    DebugWindow.TextSender()
-  --    hw(text)
     elseif text ~= nil then
       DebugWindow.TextSender()
       DebugWindow.ScriptSender()
   end
 end
 
+-------------AUTOSEND----------------
+function DebugWindow.AutoSender()
+  local text = towstring(TextEditBoxGetText("DebugWindowTextBox"))
+  if text == L"ff" then
+    DebugWindow.TextSender()
+    DebugWindow.RegisteredList()
+  elseif text == L"ror" then
+    DebugWindow.TextSender()
+    DebugWindow.ror()
+  elseif text == L"ss" then
+    DebugWindow.TextSender()
+    DebugWindow.SpyStop()
+  elseif text == L"spylist" then
+    DebugWindow.TextSender()
+    DebugWindow.SpyList()
+end
+end
+
+
+
 ---------------------------------------------------------------------
-----------------PRINT FUNCTIONS TO WINDOW ------------------------
+----------------EVENT SPY--------------------
+
+
+  function DebugWindow.OnShowFocus()
+    visible = WindowGetShowing("DebugWindowText") == true
+      if visible == true then
+    WindowAssignFocus( "DebugWindowTextBox", true ) end
+end
+
+
+function DebugWindow.EventRegister()
+  for k,v in pairs(DebugWindow.spyfilter) do
+    _G["EventDebug_" .. k] = function(...)
+      eve(k .. ": " .. DebugWindow.tableConcat({...}, ", ")) end
+    end
+end
 
 
 -----------REGISTER EVENT SPY---------------
   function DebugWindow.RegisterHandleSpy()
-    for k,v in pairs(DebugWindow.spyfilter) do
-      DebugWindow.registeredevents[k]=v end
-    for k,v in pairs(DebugWindow.registeredevents) do
-        _G["EventDebug_" .. k] = function(...)
-        eve(k .. ": " .. DebugWindow.tableConcat({...}, ", ")) end
-  end
-end
-----------------------------------------
+        DebugWindow.EventRegister()
+        if next(RegisteredEvents) == nil then
+            for k,v in pairs(DebugWindow.spyfilter) do
+              if k ~= "UPDATE_PROCESSED"  and k ~="PLAYER_POSITION_UPDATED" and k ~= "RVR_REWARD_POOLS_UPDATED" then
+                RegisteredEvents[k]=v end
+              end
+            end
+          end
+--------------------CLEAR TABLE ON UNREGISTER--------------------
 
 function DebugWindow.TableClear()
-for k in pairs (DebugWindow.registeredevents) do
-  DebugWindow.registeredevents[k] = nil
+for k in pairs (RegisteredEvents) do
+  RegisteredEvents[k] = nil
 end
 end
 
+---------CHECK IF SPYING ON RELUI----------
 function DebugWindow.SpyCheck()
-if DebugWindow.registeredevents == nil then return end
-if next(DebugWindow.registeredevents) ~= nil then
-  for k,v in pairs(DebugWindow.registeredevents) do
+if RegisteredEvents == nil then return end
+if next(RegisteredEvents) ~= nil then
+  for k,v in pairs(RegisteredEvents) do
       _G["EventDebug_" .. k] = function(...)
       eve(k .. ": " .. DebugWindow.tableConcat({...}, ", ")) end
     end
-  end
-        for k,v in pairs(DebugWindow.registeredevents) do
-          if k ~= "UPDATE_PROCESSED"  and k ~="PLAYER_POSITION_UPDATED" then
-          RegisterEventHandler(DebugWindow.registeredevents[k], "EventDebug_" .. k)
-      end
     end
+        for k,v in pairs(RegisteredEvents) do
+          RegisterEventHandler(RegisteredEvents[k], "EventDebug_" .. k)
+        end
 end
 
-
+-----------007 SPY -----------------
 function DebugWindow.Spy()
-  if next(DebugWindow.registeredevents) ~= nil then
-    pp("You are already spying.") return end
+  if next(RegisteredEvents) ~= nil then
+    pp("You are already spying.") return
+  end
     DebugWindow.RegisterHandleSpy()
-            for k,v in pairs(DebugWindow.registeredevents) do
-              if k ~= "UPDATE_PROCESSED"  and k ~="PLAYER_POSITION_UPDATED" then
-              RegisterEventHandler(DebugWindow.registeredevents[k], "EventDebug_" .. k)
-          end
-      end
+    for k,v in pairs(DebugWindow.spyfilter) do
+      if k ~= "UPDATE_PROCESSED"  and k ~="PLAYER_POSITION_UPDATED" and k ~= "RVR_REWARD_POOLS_UPDATED" then
+        RegisteredEvents[k]=v end end
+            for k,v in pairs(RegisteredEvents) do
+              RegisterEventHandler(RegisteredEvents[k], "EventDebug_" .. k)
+            end
         pp(L"Starting Event Spy")
 end
 
-
+----------------007 SPYSTOP------------------
 function DebugWindow.SpyStop()
 
-    if next(DebugWindow.registeredevents) == nil then
+    if next(RegisteredEvents) == nil then
             pp("You are not spying anything.")
-      elseif DebugWindow.registeredevents ~= nil then
-        for k,v in pairs(DebugWindow.registeredevents) do
-            if k ~="PLAYER_POSITION_UPDATED" and k ~= "UPDATE_PROCESSED" then
-              UnregisterEventHandler(DebugWindow.registeredevents[k], "EventDebug_" .. k)
-            end
+      elseif RegisteredEvents ~= nil then
+        for k,v in pairs(RegisteredEvents) do
+              UnregisterEventHandler(RegisteredEvents[k], "EventDebug_" .. k)
         end
         DebugWindow.TableClear()
         pp(L"Stopping Event Spy")
     end
 end
 
+---------------------------------------------------------------------
+function spyadd(text)
+local wasFound=false;
 
+    for k,v in pairs(DebugWindow.spyfilter) do
+        if string.find(k, text) then
+          wasFound=true;
+          if RegisteredEvents[k]==nil then
+            RegisteredEvents[k]=v
+            DebugWindow.RegisterHandleSpy()
+            pp("Adding "..k.." to Event Spy.")
+            RegisterEventHandler(RegisteredEvents[k], "EventDebug_" .. k)
+        elseif RegisteredEvents[k] ~=nil then
+          pp("Already spying on "..k..".")
+            end
+          end
+        end
+        if not wasFound then
+          pp("No matching events found.")
+        end
+end
+
+
+function spyrem(text)
+  for k,v in pairs (DebugWindow.spyfilter) do
+    if string.find(k,text) then
+      if RegisteredEvents[k] ==nil then pp("You are not spying on "..k.." currently.")
+      end
+    end
+end
+    for k,v in pairs(RegisteredEvents) do
+        if string.find(k, text) then
+          if RegisteredEvents[k]~=nil then
+            pp("Removing "..k.." from Event Spy.")
+            UnregisterEventHandler(RegisteredEvents[k], "EventDebug_" .. k)
+            RegisteredEvents[k]=nil
+            end
+          end
+        end
+end
+
+function DebugWindow.SpyList()
+if next(RegisteredEvents)==nil then
+  pp("You are not spying anything.")
+elseif next(RegisteredEvents) ~= nil then
+  pp("Currently spying on:")
+  p(RegisteredEvents)
+end
+end
+
+---------------------------------
 ------EVENT LIST---------
 function DebugWindow.EventList()
           p(SystemData.Events)
@@ -455,7 +535,7 @@ function DebugWindow.RegisterFunctions()
       end
         for i,v in pairs(_G) do
         if type(v) == "function" then
-          table.insert(DebugWindow.RegisteredFunctionList, i)
+          DebugWindow.RegisteredFunctionList[i]=v
           end
          end
          table.sort(DebugWindow.RegisteredFunctionList)
@@ -465,22 +545,24 @@ function DebugWindow.RegisterFunctions()
 ------------- PRINT ALL REGISTERED FUINCTIONS---------------------
 
       function DebugWindow.RegisteredList()
+        DebugWindow.RegisterFunctions()
           p(DebugWindow.RegisteredFunctionList)
       end
 
-------------------------------SEND TO TERMINAL-------------
+------------------------------SEND FROM TERMINAL-------------
 
 function DebugWindow.ScriptSender()
 SendChatText(L"/script "..towstring(text), L"")
 end
 
 function DebugWindow.TextSender()
+  local text = towstring(TextEditBoxGetText("DebugWindowTextBox"))
   inp(text)
   DebugWindow.AddInputHistory()
   DebugWindow.ScrollToBottom ()
   TextEditBoxSetText(SystemData.ActiveWindow.name,L"")
 end
---------------------------------------------------------------------
+-----------------------ON ESC BEHAVIOR TEXTBOX---------------------------------------
 function DebugWindow.TextClear()
     local scrollcondition = LogDisplayIsScrolledToBottom ("DebugWindowText") == true
     local text = TextEditBoxGetText(SystemData.ActiveWindow.name)
@@ -494,10 +576,8 @@ function DebugWindow.TextClear()
 ---------------------------------------------------------------------
 ---------on esc window behavior------------------------------
 function DebugWindow.OnKeyEscape()
-    if WindowGetShowing ("DebugWindow", true) then
       WindowAssignFocus( "DebugWindowTextBox", true)
       DebugWindow.ScrollToBottom ()
-    end
 end
 ------------------------
 
@@ -509,7 +589,7 @@ function DebugWindow.help()
  ______________________________________
  \_____________________________________/
 
-                            warTerminal v1.0
+                         warTerminal v1.0.2
   _____________________________________
 /______________________________________\
 
@@ -517,13 +597,12 @@ Available commands:
 
 p(text) - Prints to the terminal.
 
-f - Prints all available game-related functions.
-reg - Saves all currently registered functions to a table.
-ff- Prints all currently registered functions.
+f - Prints a list of all basic game functions.
+ff- Prints a list of all currently registered functions.
 
 r - Reloads UI
 
-hw(windowName) - Highlights where a specified window is being drawn even if not currently visible.
+hw"windowName" - Highlights where a specified window is being drawn even if not currently visible.
 (Not compatible with NoUselessMods-HelpTips)
 
 ror - List of RoR server commands
@@ -531,8 +610,11 @@ ror - List of RoR server commands
 Event Spy
 e - Prints a list of all game events.
 s - Start on-the-fly event spying.
-(UPDATE_PROCESSED and PLAYER_POSITION_UPDATED are not spied upon)
+(UPDATE_PROCESSED, RVR_REWARD_POOLS_UPDATED and PLAYER_POSITION_UPDATED are not spied upon by default)
 ss - Stop on-the-fly event spying.
+spylist - Prints a list of events being spied upon currently.
+spyadd"text" - Looks for partial matches and adds an event to Event Spy.
+spyrem"text" - Looks for partial matches and removes an event from Event Spy.
 ]]
     }
 
@@ -592,9 +674,6 @@ GROUPCHALLENGE: Challenge another group to a scenario
          pp(v)
           end
 end
-
------
----maybe move this to debugwindow.spy and keep the table.insert functionality out of here because you filter 3 events on starting spy annd it conflicts with two tables
 
 
 --------------TABLE CONCAT CHANGES TO PRINT EVENTS CORRECTLY -----------------

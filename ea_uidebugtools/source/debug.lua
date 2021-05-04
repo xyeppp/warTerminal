@@ -28,6 +28,7 @@ function EVENT( text )
 end
 ------------------------------------------------
 
+
 --------------------------
 
 function ERROR( text )
@@ -522,7 +523,7 @@ end
 local registeredfunctionlist = {}
    for i,v in pairs(_G) do
         if type(v) == "function" then
-            table.insert(registeredfunctionlist, i)
+            registeredfunctionlist[i]=v
          end
            table.sort(registeredfunctionlist)
 end
@@ -534,7 +535,9 @@ function functionlist()
         end
 
 ---------------------------------------------------------------------
----------------------------------------------------------------------
+
+
+
 
 -- Hook assert so that it "compiles" to nothing when the debug library isn't loaded.
 -- And when the debug library is loaded, assert will also display a simple stack trace.
@@ -546,7 +549,7 @@ then
         if (not condition)
         then
             SIMPLE_STACK_TRACE ()
-            --luaAssert (condition)
+            luaAssert (condition)
         end
     end
 else
