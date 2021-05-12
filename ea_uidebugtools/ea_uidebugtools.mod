@@ -9,17 +9,22 @@
               </Dependencies>
         <Files>
             <File name="Source/Debug.lua" />
+            <File name="Source/DebugWindowCodePad.lua" />
             <File name="Source/DebugWindow.xml" />
             <File name="Source/DebugWindowVerticalScroll.xml" />
           </Files>
         <OnInitialize>
             <CreateWindow name="DebugWindow" show="false" />
+            <CallFunction name="DevPad.Initialize" />
         </OnInitialize>
         <SavedVariables>
             <SavedVariable name="DebugWindow.Settings" />
             <SavedVariable name="DebugWindow.history" />
             <SavedVariable name="DebugWindow.RegisteredFunctionList" />
             <SavedVariable name="RegisteredEvents" />
+            <SavedVariable name="DevPad_Settings" />
+            <SavedVariable name="DevPad_Save" />
+            <SavedVariable name="DevPad_FileCount" />
         </SavedVariables>
         <OnShutdown>
             <CallFunction name="DebugWindow.Shutdown" />

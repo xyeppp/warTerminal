@@ -119,9 +119,12 @@ function DebugWindow.Initialize()
     -- Options
     ButtonSetText( "DebugWindowToggleOptions", L"Options")
 
+    --DevPad
+    ButtonSetText( "DebugWindowToggleDevPad", L"DevPad")
 
 
     CreateWindow( "DebugWindowOptions", false )
+    CreateWindow( "DevPadWindow", false )
 
 
     LabelSetText( "DebugWindowOptionsFiltersTitle", L"Logging Filters:" )
@@ -209,6 +212,7 @@ end
 function DebugWindow.Hide()
     WindowSetShowing("DebugWindow", false )
     WindowSetShowing("DebugWindowOptions", false )
+
 end
 
 function DebugWindow.ToggleLogging()
@@ -386,6 +390,9 @@ function DebugWindow.AutoSender()
   elseif text == L"spylist" then
     DebugWindow.TextSender()
     DebugWindow.SpyList()
+  elseif text == L"devpad" then
+    DebugWindow.TextSender()
+    DevPadWindow.Toggle()
 end
 end
 
@@ -396,12 +403,15 @@ end
 
 
   function DebugWindow.OnShowFocus()
-    visible = WindowGetShowing("DebugWindowText") == true
-      if visible == true then
-    WindowAssignFocus( "DebugWindowTextBox", true ) end
-end
+    local  visible = WindowGetShowing("DebugWindow") == true
+    local  codevis=WindowGetShowing("DevPadWindowDevPadCode")==true
+        if codevis==true and  visible==false then
+          WindowAssignFocus("DevPadWindowDevPadCode", true)
+        elseif visible==true then
+        WindowAssignFocus( "DebugWindowTextBox", true ) end
+      end
 
-
+-----------REGISTER MAIN FUNCTION---------------
 function DebugWindow.EventRegister()
   for k,v in pairs(DebugWindow.spyfilter) do
     _G["EventDebug_" .. k] = function(...)
@@ -471,7 +481,7 @@ function DebugWindow.SpyStop()
     end
 end
 
----------------------------------------------------------------------
+----------ADD TO SPY-------
 function spyadd(text)
 local wasFound=false;
 
@@ -493,7 +503,7 @@ local wasFound=false;
         end
 end
 
-
+----------REMOVE FROM EVENT SPY
 function spyrem(text)
   for k,v in pairs (DebugWindow.spyfilter) do
     if string.find(k,text) then
@@ -511,7 +521,7 @@ end
           end
         end
 end
-
+-----LIST OF EVENTS SPIED UPON
 function DebugWindow.SpyList()
 if next(RegisteredEvents)==nil then
   pp("You are not spying anything.")
@@ -562,25 +572,37 @@ function DebugWindow.TextSender()
   DebugWindow.ScrollToBottom ()
   TextEditBoxSetText(SystemData.ActiveWindow.name,L"")
 end
+
 -----------------------ON ESC BEHAVIOR TEXTBOX---------------------------------------
 function DebugWindow.TextClear()
+    local devpad=WindowGetShowing("DevPadWindow")==true
     local scrollcondition = LogDisplayIsScrolledToBottom ("DebugWindowText") == true
-    local text = TextEditBoxGetText(SystemData.ActiveWindow.name)
+    local text = TextEditBoxGetText("DebugWindowTextBox")
+    local texting=true;
     if (text == L"" and scrollcondition == true) then
-  	       WindowSetShowing("DebugWindow", false)
-      else
-          TextEditBoxSetText(SystemData.ActiveWindow.name,L"")
-          DebugWindow.ScrollToBottom ()
+        texting=false;
+          if devpad==true then
+            WindowAssignFocus("DevPadWindowDevPadCode", true)
+          else
+  	        DebugWindow.Hide()
           end
+    end
+      if texting then
+          DebugWindow.ScrollToBottom ()
+            if scrollcondition==true then
+              TextEditBoxSetText(SystemData.ActiveWindow.name,L"")
+            end
+      end
   end
 ---------------------------------------------------------------------
 ---------on esc window behavior------------------------------
 function DebugWindow.OnKeyEscape()
+  if WindowGetShowing("DebugWindow") then
       WindowAssignFocus( "DebugWindowTextBox", true)
       DebugWindow.ScrollToBottom ()
+    end
 end
 ------------------------
-
 
 --------------------print help--------------------------
 function DebugWindow.help()
@@ -589,7 +611,7 @@ function DebugWindow.help()
  ______________________________________
  \_____________________________________/
 
-                         warTerminal v1.0.2
+                         warTerminal v1.1.1
   _____________________________________
 /______________________________________\
 

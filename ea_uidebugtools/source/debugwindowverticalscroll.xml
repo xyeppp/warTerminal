@@ -88,5 +88,68 @@
                 <Bottom x="172" y="429" />
             </TexCoords>
         </VerticalResizeImage>
+
+        <Button name="EA_Button_DefaultResizableComboBoxSelected2" backgroundtexture="shared_01" highlighttexture="shared_01" font="font_clear_small_bold" textalign="left"
+                overlaytexture="shared_01" overlayhighlighttexture="shared_01">
+            <Size>
+                <AbsPoint x="210" y="29" />
+            </Size>
+            <TextColors>
+                <Normal r="255" g="255" b="255" a="255" />
+                <NormalHighlit r="255" g="255" b="0" a="255" />
+                <Pressed r="255" g="255" b="0" a="255" />
+                <PressedHighlit r="255" g="255" b="0" a="255" />
+                <Disabled r="92" g="92" b="92" a="255" />
+            </TextColors>
+            <ResizeImages>
+                <Normal def="EA_HorizontalResizeImage_DefaultComboBox2"  />
+                <NormalHighlit def="EA_HorizontalResizeImage_DefaultComboBox2" />
+                <Pressed def="EA_HorizontalResizeImage_DefaultComboBox2" />
+                <PressedHighlit def="EA_HorizontalResizeImage_DefaultComboBox2" />
+                <Disabled def="EA_HorizontalResizeImage_DefaultComboBox2" />
+            </ResizeImages>
+            <OverlaySize x="27" y="28" />
+            <OverlayOffset x="183" y="0" />
+            <OverlayTexCoords>
+                <Normal x="0" y="28" />
+                <NormalHighlit x="27" y="28" />
+                <Pressed x="0" y="56" />
+                <PressedHighlit x="0" y="56" />
+                <Disabled x="27" y="56" />
+            </OverlayTexCoords>
+            <TextOffset x="5" y="7" />
+        </Button>
+
+        <HorizontalResizeImage name="EA_HorizontalResizeImage_DefaultComboBox2" texture="shared_01">
+            <Size>
+                <AbsPoint x="68" y="28" />
+            </Size>
+            <Sizes left="7" middle="52" right="7" />
+            <TexCoords>
+                <Left x="0" y="0" />
+                <Middle x="7" y="0" />
+                <Right x="59" y="0" />
+            </TexCoords>
+        </HorizontalResizeImage>
+
+
+
+        <Button name="EA_Button_DefaultMenuButton2" font="font_clear_small_bold"  textalign="leftcenter" >
+            <Size>
+                <AbsPoint x="195" y="24" />
+            </Size>
+            <TextColors>
+                <Normal r="255" g="255" b="255" a="255" />
+                <NormalHighlit r="255" g="255" b="0" a="255" />
+                <Pressed r="255" g="255" b="0" a="255" />
+                <PressedHighlit r="255" g="255" b="0" a="255" />
+                <Disabled r="92" g="92" b="92" a="255" />
+            </TextColors>
+            <ResizeImages>
+                <NormalHighlit def="EA_FullResizeImage_RedTransparent" />
+                <PressedHighlit def="EA_FullResizeImage_RedTransparent" />
+            </ResizeImages>
+            <TextOffset x="0" y="5" />
+        </Button>
     </Windows>
 </Interface>
