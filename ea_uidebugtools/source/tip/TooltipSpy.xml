@@ -1,0 +1,40 @@
+<Interface xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../Interface.xsd">
+    <Scripts>
+        <Script file="TooltipSpy.lua" />
+    </Scripts>
+    <Windows>
+        <Window name="TooltipSpyWindow" movable="true">
+            <Anchors>
+                <Anchor point="center" relativePoint="center" relativeTo="Root">
+                    <AbsPoint x="0" y="0" />
+                </Anchor>
+            </Anchors>
+            <Size>
+                <AbsPoint x="500" y="700" />
+            </Size>
+
+            <Windows>
+                <FullResizeImage name="$parentBackground" inherits="DefaultWindowInnerBackground">
+                    <Anchors>
+                        <Anchor point="topleft" relativePoint="topleft" relativeTo="$parentOutput">
+                            <AbsPoint x="-5" y="-5"/>
+                        </Anchor>
+                        <Anchor point="bottomright" relativePoint="bottomright" relativeTo="$parentOutput">
+                            <AbsPoint x="5" y="5"/>
+                        </Anchor>
+                    </Anchors>
+                </FullResizeImage>
+                <EditBox name="$parentOutput" inherits="EA_EditBox_DefaultFrame_Multiline" maxchars="10240" font="font_clear_small_bold" autoresize="true" textalign="left" scrollbar="EA_ScrollBar_ChatVertical">
+                    <Size>
+                        <AbsPoint x="490" y="690" />
+                    </Size>
+                    <Anchors>
+                        <Anchor point="topleft" relativePoint="topleft" relativeTo="$parent">
+                            <AbsPoint x="5" y="5"/>
+                        </Anchor>
+                    </Anchors>
+                </EditBox>
+            </Windows>
+        </Window>
+    </Windows>
+</Interface>

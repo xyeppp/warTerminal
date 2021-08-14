@@ -2,7 +2,8 @@
 ----------------------------------------------------------------
 -- Global Variables
 ----------------------------------------------------------------
-
+local copyWindow="DevPadCopy"
+local copyBar="CopyScrollBar"
 DebugWindow = {}
 DebugWindow.history = {}
 DebugWindow.spyfilter = SystemData.Events
@@ -12,7 +13,9 @@ DebugWindow.Settings =
 {
     logsOn = true,
     useDevErrorHandling = true,
-    loadLuaDebugLibrary = false
+    loadLuaDebugLibrary = false,
+    buttonclick=false,
+    showTimestamp=false
 
 }
 
@@ -28,6 +31,8 @@ DebugWindow.Settings.LogFilters[10] = { enabled=true,  color=DefaultColor.LIGHT_
 DebugWindow.Settings.LogFilters[11] = { enabled=true,  color=DefaultColor.GOLD }
 
 DebugWindow.currentMouseoverWindow = nil
+
+
 
 
 -- For Internal Builds, Default the Settings to the current log states in the pregame
@@ -82,6 +87,7 @@ function DebugWindow.Initialize()
     -- Setup the Log
     DebugWindow.UpdateLog()
     DebugWindow.SpyCheck()
+    Mesh.MeshCheck()
 
 
 
@@ -104,8 +110,11 @@ function DebugWindow.Initialize()
     LabelSetTextColor("DebugWindowMouseOverText", 255, 255, 0 )
         LabelSetTextColor("DebugWindowMousePointText", 255, 255, 0 )
 
-    -- Display Settings
+    if DebugWindow.Settings.showTimestamp then
     LogDisplaySetShowTimestamp( "DebugWindowText", true )
+    else
+    LogDisplaySetShowTimestamp( "DebugWindowText", false )
+    end
     LogDisplaySetShowLogName( "DebugWindowText", false )
     LogDisplaySetShowFilterName( "DebugWindowText", true )
 
@@ -116,12 +125,18 @@ function DebugWindow.Initialize()
 
 
 
+
     -- Options
     ButtonSetText( "DebugWindowToggleOptions", L"Options")
 
     --DevPad
     ButtonSetText( "DebugWindowToggleDevPad", L"DevPad")
 
+    --Copy
+    ButtonSetText( "DebugWindowToggleCopy", L"Copy")
+
+    --Object
+    ButtonSetText("DebugWindowToggleObject", L"Inspect")
 
     CreateWindow( "DebugWindowOptions", false )
     CreateWindow( "DevPadWindow", false )
@@ -149,6 +164,7 @@ function DebugWindow.Initialize()
         ButtonSetPressedFlag( buttonName, filterData.enabled )
         WindowSetId( buttonName, filterType )
 
+
         -- When UI Log filters are off, disable logging of that filter type entirely.
         TextLogSetFilterEnabled( "UiLog", filterType, filterData.enabled  )
     end
@@ -164,23 +180,51 @@ function DebugWindow.Initialize()
     ButtonSetPressedFlag( "DebugWindowOptionsErrorOption1Button", DebugWindow.Settings.useDevErrorHandling  )
     ButtonSetPressedFlag( "DebugWindowOptionsErrorOption2Button", GetUseLuaErrorHandling() )
 
-    LabelSetText(  "DebugWindowOptionsLuaDebugLibraryLabel", L"Load Lua Debug Library" )
-    ButtonSetPressedFlag( "DebugWindowOptionsLuaDebugLibraryButton", GetLoadLuaDebugLibrary() )
+    LabelSetText(  "DebugWindowOptionsLuaDebugLibraryLabel", L"Show Timestamps" )
+    ButtonSetPressedFlag( "DebugWindowOptionsLuaDebugLibraryButton", LogDisplayGetShowTimestamp("DebugWindowText") )
 
     ButtonSetText( "DebugWindowOptionsClearLogText", L"Clear Log" )
     WindowSetShowing("DebugWindowOptionsFilterType10", false)
     WindowSetShowing("EA_LabelCheckButtonSmallCopy", false)
 
     WindowSetShowing("DebugWindowOptions", false )
+    WindowSetShowing(copyBar, false)
+    WindowSetShowing(copyWindow,false)
 
     HandlePregameInit()
+
+    --history
     TextEditBoxSetHistory("DebugWindowTextBox", DebugWindow.history )
-    if( DebugWindow.history ) then
+      if( DebugWindow.history ) then
         TextEditBoxSetHistory("DebugWindowTextBox", DebugWindow.history )
       end
-
+    --defs
+      abfind=DebugWindow.AbilityFind
+      desc = "desc"
+      mesh=Mesh.Toggle
+      changefont=SetNamesAndTitlesFont
+      RegisterEventHandler(327698, "DebugWindow.InitAddons")
 end
 
+function DebugWindow.InitAddons()
+  DevPad.Initialize()
+  ObjectInspector.WindowInit()
+  CaptainHook.Initialise()
+end
+
+
+function DebugWindow.OnShown()
+  if not bustedloaded then return else
+  if Busted.Show then
+  WindowSetShowing("BustedGUI", true)
+end
+end
+end
+
+
+function DebugWindow.OnHidden()
+  WindowSetShowing("BustedGUI", false)
+end
 
 -- OnShutdown Handler
 function DebugWindow.Shutdown()
@@ -206,12 +250,17 @@ function DebugWindow.Update( timePassed )
         LabelSetText( "DebugWindowMouseOverText", StringToWString(SystemData.MouseOverWindow.name) )
         DebugWindow.lastMouseOverWindow = SystemData.MouseOverWindow.name
     end
+
+
 end
 
 
 function DebugWindow.Hide()
     WindowSetShowing("DebugWindow", false )
     WindowSetShowing("DebugWindowOptions", false )
+    if WindowGetShowing("BustedGUI") then
+      WindowSetShowing("BustedGUI", false )
+    end
 
 end
 
@@ -229,6 +278,7 @@ function DebugWindow.ToggleLogging()
 
     DebugWindow.UpdateLog()
   end
+
 
 function DebugWindow.UpdateLog()
 
@@ -279,7 +329,7 @@ function DebugWindow.ClearTextLog()
 
     ButtonSetPressedFlag( "DebugWindowOptionsErrorOption1Button", DebugWindow.Settings.useDevErrorHandling  )
     ButtonSetPressedFlag( "DebugWindowOptionsErrorOption2Button", GetUseLuaErrorHandling() )
-    ButtonSetPressedFlag( "DebugWindowOptionsLuaDebugLibraryButton", GetLoadLuaDebugLibrary() )
+    ButtonSetPressedFlag( "DebugWindowOptionsLuaDebugLibraryButton", LogDisplayGetShowTimestamp("DebugWindowText") )
 
 end
 
@@ -326,11 +376,17 @@ function DebugWindow.UpdateCodeErrorHandling()
     ButtonSetPressedFlag( "DebugWindowOptionsErrorOption2Button", enabled )
 end
 
+--modified LoadLuaDebugLibrary into timeStamp since we don't have an internal client and never will
 function DebugWindow.UpdateLoadLuaDebugLibrary()
-    local enabled = GetLoadLuaDebugLibrary()
+    local enabled = LogDisplayGetShowTimestamp("DebugWindowText")
     enabled = not enabled
 
-    SetLoadLuaDebugLibrary( enabled )
+    LogDisplaySetShowTimestamp("DebugWindowText", enabled )
+    if enabled then
+    DebugWindow.Settings.showTimestamp=true
+    else
+    DebugWindow.Settings.showTimestamp=false
+    end
     ButtonSetPressedFlag( "DebugWindowOptionsLuaDebugLibraryButton", enabled )
 end
 
@@ -346,6 +402,38 @@ end
 function DebugWindow.ScrollToBottom ()
     LogDisplayScrollToBottom ("DebugWindowText")
     WindowAssignFocus("DebugWindowTextBox", true)
+end
+
+
+function DebugWindow.ScJoin()
+  pp("Attempting to join a scenario.")
+  BroadcastEvent( SystemData.Events.SCENARIO_INSTANCE_JOIN_NOW )
+end
+
+function DebugWindow.ScGroup()
+  if not WindowGetShowing("ScenarioGroupWindow") then
+    pp("Displaying Scenario Groups Window.")
+    WindowSetShowing("ScenarioGroupWindow", true)
+  else
+      pp("Hiding Scenario Groups Window.")
+      WindowSetShowing("ScenarioGroupWindow", false)
+  end
+end
+
+function DebugWindow.GuildID()
+  pp("Your Guild ID is: "..tostring(GameData.Guild.m_GuildID))
+end
+
+
+function DebugWindow.CombatLog()
+  local logOn = TextLogGetEnabled( "Combat")
+  if logOn then
+  pp("Disabling Combat log.")
+  TextLogSetEnabled( "Combat", false)
+  else
+  pp("Enabling Combat log.")
+  TextLogSetEnabled( "Combat", true)
+  end
 end
 
 
@@ -369,6 +457,36 @@ function DebugWindow.TextSend()
     elseif text == L"s" then
       DebugWindow.TextSender()
       DebugWindow.Spy()
+    elseif text == L"areainfo" then
+      DebugWindow.TextSender()
+      DebugWindow.GetAreaInfo()
+    elseif text==L"abfind" then
+      DebugWindow.TextSender()
+      DebugWindow.AbilityFind()
+    elseif text==L"mesh" then
+      DebugWindow.TextSender()
+      Mesh.Toggle()
+    elseif text==L"scjoin" then
+      DebugWindow.TextSender()
+      DebugWindow.ScJoin()
+    elseif text==L"scgroup" then
+      DebugWindow.TextSender()
+      DebugWindow.ScGroup()
+    elseif text==L"guildid" then
+      DebugWindow.TextSender()
+      DebugWindow.GuildID()
+    elseif text==L"keepid" then
+      DebugWindow.TextSender()
+      DebugWindow.KeepList()
+    elseif text==L"fontlist" then
+      DebugWindow.TextSender()
+      DebugWindow.FontList()
+    elseif text==L"changefont" then
+      DebugWindow.TextSender()
+      pp("Usage: changefont(\"font1\", \"font2\")\nChanges the name & title font respectively. (fontlist to print available fonts)")
+    elseif text==L"clog" then
+      DebugWindow.TextSender()
+      DebugWindow.CombatLog()
     elseif text ~= nil then
       DebugWindow.TextSender()
       DebugWindow.ScriptSender()
@@ -537,6 +655,7 @@ function DebugWindow.EventList()
           p(SystemData.Events)
         end
 
+
 -----------------------
 -------------REGISTER ALL FUNCTIONS------------
 function DebugWindow.RegisterFunctions()
@@ -561,8 +680,17 @@ function DebugWindow.RegisterFunctions()
 
 ------------------------------SEND FROM TERMINAL-------------
 
-function DebugWindow.ScriptSender()
-SendChatText(L"/script "..towstring(text), L"")
+function DebugWindow.ScriptSender(...)
+  local emptytext=false;
+  local regex=string.match(tostring(text), "\^\%s")
+  if regex then
+     emptytext=true;
+    else
+      emptytext=false;
+    end
+    if not emptytext then
+      SendChatText(L"/script "..towstring(text), L"")
+  end
 end
 
 function DebugWindow.TextSender()
@@ -572,6 +700,8 @@ function DebugWindow.TextSender()
   DebugWindow.ScrollToBottom ()
   TextEditBoxSetText(SystemData.ActiveWindow.name,L"")
 end
+
+
 
 -----------------------ON ESC BEHAVIOR TEXTBOX---------------------------------------
 function DebugWindow.TextClear()
@@ -604,6 +734,166 @@ function DebugWindow.OnKeyEscape()
 end
 ------------------------
 
+---copy window
+--get entries & filtername
+function DebugWindow.GetEntries()
+  entry={}
+    local numEntries =TextLogGetNumEntries( "UiLog")
+    for i=0, numEntries - 1 do
+        local timestamp,filterId,text = TextLogGetEntry( "UiLog", i)
+        if filterId==3 then
+          filterId=L"[Error]: "
+        elseif filterId==2 then
+          filterId=L"[Warning]: "
+        elseif filterId==4 then
+          filterId=L"[Debug]: "
+        elseif filterId==11 then
+          filterId=L"[Event]: "
+        elseif filterId==5 then
+          filterId=L"[Function]: "
+        end
+        if filterId==9 or filterId==10 then
+        table.insert(entry, text)
+        else
+        table.insert(entry, filterId..text)
+        end
+    end
+   copyText = entry[1]
+     for i = 2, #entry  do
+        copyText = copyText..L"\n"..entry[i]
+    end
+    TextEditBoxSetTextColor("DevPadCopyLog",223,185,53)
+    TextEditBoxSetText("DevPadCopyLog", copyText)
+end
+
+---prevent overwriting copy text
+function DebugWindow.PreventType()
+TextEditBoxSetText("DevPadCopyLog", copyText) return
+end
+--press tab to show copylog
+function DebugWindow.OnKeyTab()
+	 DebugWindow.CopyToggle()
+ end
+--show behavior
+function DebugWindow.OnShowCopy()
+  DebugWindow.GetEntries()
+  WindowSetShowing("DevPadCopy", true)
+  WindowSetShowing("DebugWindowText", false)
+  ButtonSetText("DebugWindowToggleCopy", L"Terminal")
+end
+--hide behavior
+function DebugWindow.OnHideCopy()
+TextEditBoxSetText("DevPadCopyLog", L"")
+WindowSetShowing("DevPadCopy", false)
+WindowAssignFocus("DevPadCopyLog", false)
+WindowSetShowing("DebugWindowText", true)
+local showing=WindowGetShowing("DebugWindowTextBox")==true
+if showing then
+  WindowAssignFocus("DebugWindowTextBox", true)
+end
+ButtonSetText("DebugWindowToggleCopy", L"Copy")
+entry=nil
+end
+---show/hide window toggle
+function DebugWindow.CopyToggle()
+  local showing = WindowGetShowing( "DevPadCopy" )
+  if not showing then
+    DebugWindow.OnShowCopy()
+    WindowAssignFocus("DevPadCopyLog", true)
+  else
+    DebugWindow.OnHideCopy()
+  end
+end
+------------------------
+
+---------abfind
+
+function DebugWindow.AbilityFind (regex, desc)
+  local toomany=false;
+  if regex=="" or regex==nil then pp("Usage: abfind(\"name\", desc)\ndesc is optional")
+  else
+	regex =tostring (regex)
+	local max = 80
+	local found = 0
+
+	for id = 1, 100000
+	do
+		local ability_name = tostring (DebugWindow.FixStr(GetAbilityName (id)))
+
+		if (ability_name:lower ():match (regex)) then
+			found = found + 1
+
+			if (found >= max)
+			then
+        toomany=true;
+        pp(tostring(found).." abilities found")
+				pp("Maximum number of results reached")
+        --toomany=false;
+				break
+			end
+
+			local str = "["..tostring (id).."] "..ability_name
+			if (desc)=="desc"
+			then
+				local desc = tostring(GetAbilityDesc (id, 40))
+				if (desc:len() > 1)
+				then
+					str = str.."\n ("..desc..")"
+				end
+			end
+
+
+				pp(str)
+		end
+
+	end
+  if not toomany then
+	pp(tostring(found).." abilities found")
+  end
+  end
+end
+
+
+function DebugWindow.FixStr (str)
+
+	if (str == nil) then return nil end
+
+	local str = str
+	local pos = str:find (L"^", 1, true)
+	if (pos) then str = str:sub (1, pos - 1) end
+
+	return str
+end
+
+function DebugWindow.GetAreaInfo()
+  local AreaData = GetAreaData()
+    if( AreaData ~= nil ) then
+
+        for key, value in ipairs( AreaData ) do
+
+            -- These should match the data that was retrived from war_interface::LuaGetAreaData
+
+          --  AreaSpy.AreaListData[key] = {}
+
+            local areaName        = tostring(value.areaName)
+
+            local areaNumber    = value.areaNumber
+
+            local areaID        = value.areaID
+
+            local influenceID    = value.influenceID
+
+
+
+            local tempText = ("Area: "..areaName.."\nNumber: "..areaNumber.."\nID: "..areaID.."\nInfluence ID: "..influenceID)
+
+
+     pp(tempText)
+end
+end
+end
+
+
 --------------------print help--------------------------
 function DebugWindow.help()
  local help = {[[
@@ -611,32 +901,54 @@ function DebugWindow.help()
  ______________________________________
  \_____________________________________/
 
-                         warTerminal v1.1.1
+                           warTerminal v1.2
   _____________________________________
 /______________________________________\
 
 Available commands:
 
-p(text) - Prints to the terminal.
+p() - Prints to the terminal.
 
 f - Prints a list of all basic game functions.
-ff- Prints a list of all currently registered functions.
+ff - Prints a list of all currently registered functions.
+e - Prints a list of all game events.
 
 r - Reloads UI
 
+clog - Toggles the Combat Log on or off.
+
+logdump("name", objects) - Dumps the contents of specified objects to a .log file.
+
+abfind("name", desc) - Prints a list of matching abilities with their description if specified.
+areainfo - Displays information about the current area.
+
+scjoin - Rejoin a SC/City after a crash or when the scenario-pop window disapeared.
+scgroup - Displays Scenario Group window.
+
+fontlist - Prints a list of all in-game available fonts.
+changefont("font1", "font2") - Changes the name & title font respectively.
+
+guildid - Displays the ID of your Guild.
+keepid - Prints a list of keep IDs.
+
 hw"windowName" - Highlights where a specified window is being drawn even if not currently visible.
 (Not compatible with NoUselessMods-HelpTips)
+mesh(size) - Creates an on-screen grid for easy layout arrangement/measurements.
+(16/256 - intervals of 16)
 
 ror - List of RoR server commands
 
 Event Spy
-e - Prints a list of all game events.
 s - Start on-the-fly event spying.
-(UPDATE_PROCESSED, RVR_REWARD_POOLS_UPDATED and PLAYER_POSITION_UPDATED are not spied upon by default)
+(UPDATE_PROCESSED, RVR_REWARD_POOLS_UPDATED and PLAYER_POSITION_UPDATED are not added by default)
 ss - Stop on-the-fly event spying.
 spylist - Prints a list of events being spied upon currently.
 spyadd"text" - Looks for partial matches and adds an event to Event Spy.
 spyrem"text" - Looks for partial matches and removes an event from Event Spy.
+
+Captain Hook
+hook(func) - Hooks a function and spies on it's parameters.
+unhook(func) - Unhooks a function from spying.
 ]]
     }
 
@@ -650,7 +962,6 @@ end
 
 function DebugWindow.ror()
   local ror = {[[
-
 
 AVAILABLE ROR SERVER COMMANDS
 ===================================
@@ -696,6 +1007,133 @@ GROUPCHALLENGE: Challenge another group to a scenario
          pp(v)
           end
 end
+
+
+function DebugWindow.KeepList()
+  local keeplist ={[[
+
+Dok Karaz - ID: 1
+Fangbreaka Swamp - ID: 2
+Gnol Baraz - ID: 3
+Thickmuck Pit -  ID: 4
+Karaz Drengi - ID: 5
+Kazad Dammaz - ID: 6
+Bloodfist Rock - ID: 7
+Karak Karag - ID: 8
+Ironskin Skar - ID: 9
+Badmoon Hole - ID: 10
+Mandred's Hold - ID: 11
+Stonetroll Keep - ID: 12
+Passwatch Castle - ID: 13
+Stoneclaw Castle - ID: 14
+Wilhelm's Fist - ID: 15
+Morr's Repose - ID: 16
+Southern Garrison - ID: 17
+Garrison of Skulls - ID: 18
+Zimmeron's Hold - ID: 19
+Charon's Keep - ID: 20
+Cascades of Thunder - ID: 21
+Spite's Reach - ID: 22
+The Well of Qhaysh - ID: 23
+Ghrond's Sacristy - ID: 24
+Arbor of Light - ID: 25
+Pillars of Remembrance - ID: 26
+Covenant of Flame - ID: 27
+Drakebreaker's Scourge - ID: 28
+Hatred's Way - ID: 29
+Wrath's Resolve - ID: 30
+  ]]}
+  for k,v in pairs(keeplist) do
+         pp(v)
+          end
+end
+
+
+function DebugWindow.FontList()
+  local fontlist={[[
+
+"font_heading_default"
+"font_heading_medium"
+"font_heading_large"
+"font_heading_huge"
+"font_heading_medium_noshadow"
+"font_heading_large_noshadow"
+"font_heading_big_noshadow"
+"font_heading_huge_noshadow"
+"font_journal_body"
+"font_journal_text"
+"font_journal_body_large"
+"font_journal_text_large"
+"font_journal_text_huge"
+"font_journal_text_italic"
+"font_journal_sub_heading"
+"font_journal_heading"
+"font_journal_heading_smaller"
+"font_journal_small_heading"
+"font_default_heading"
+"font_default_medium_heading"
+"font_default_sub_heading"
+"font_default_sub_heading_no_outline"
+"font_default_war_heading"
+"font_default_text"
+"font_default_text_no_outline"
+"font_default_text_small"
+"font_default_text_large"
+"font_default_text_huge"
+"font_default_text_giant"
+"font_chat_text"
+"font_chat_text_no_outline"
+"font_chat_text_bold"
+"font_clear_default"
+"font_clear_tiny"
+"font_clear_small"
+"font_clear_medium"
+"font_clear_large"
+"font_clear_small_bold"
+"font_clear_medium_bold"
+"font_clear_large_bold"
+"font_default_text_gigantic"
+"font_heading_default_no_shadow"
+"font_heading_zone_name_no_shadow"
+"font_heading_tiny_no_shadow"
+"font_heading_20pt_no_shadow"
+"font_heading_22pt_no_shadow"
+"font_heading_small_no_shadow"
+"font_heading_huge_no_shadow"
+"font_heading_rank"
+"font_heading_target_mouseover_name"
+"font_heading_unitframe_large_name"
+"font_heading_unitframe_con"
+"font_alert_outline_tiny"
+"font_alert_outline_small"
+"font_alert_outline_medium"
+"font_alert_outline_large"
+"font_alert_outline_huge"
+"font_alert_outline_giant"
+"font_alert_outline_gigantic"
+"font_alert_outline_half_tiny"
+"font_alert_outline_half_small"
+"font_alert_outline_half_medium"
+"font_alert_outline_half_large"
+"font_alert_outline_half_huge"
+"font_alert_outline_half_giant"
+"font_alert_outline_half_gigantic"
+"font_guild_MP_R_17"
+"font_guild_MP_R_19"
+"font_guild_MP_R_23"
+"font_name_plate_titles_old"
+"font_name_plate_names_old"
+"font_name_plate_titles"
+"font_name_plate_names"
+"font_title_window_game_rating_text"
+"font_chat_window_game_rating_text"
+]]}
+
+  for k,v in pairs(fontlist) do
+    pp(v)
+  end
+end
+
 
 
 --------------TABLE CONCAT CHANGES TO PRINT EVENTS CORRECTLY -----------------

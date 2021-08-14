@@ -2,6 +2,7 @@
 <Interface xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../Interface.xsd">
     <Scripts>
         <Script file="Source/DebugWindow.lua" />
+        <Script file="Source/bust/Busted.lua"/>
     </Scripts>
     <Include file="Source/DebugWindowVerticalScroll.xml" />
     <Windows>
@@ -14,7 +15,7 @@
         </Window>
 
 
-        <Window name="DebugWindow" movable="true" layer="popup" savesettings="true" alpha="0.85" handleinput="true">
+        <Window name="DebugWindow" movable="true" layer="popup" savesettings="true" alpha="0.97" handleinput="true">
             <Size>
                 <AbsPoint x="800" y="550" />
             </Size>
@@ -28,8 +29,66 @@
                 <EventHandler event="OnUpdate" function="DebugWindow.Update" />
                 <EventHandler event="OnShutdown" function="DebugWindow.Shutdown" />
                 <EventHandler event="OnKeyEscape" function="DebugWindow.OnKeyEscape" />
+                <EventHandler event="OnShown" function="DebugWindow.OnShown"/>
+                  <EventHandler event="OnHidden" function="DebugWindow.OnHidden" />
                 </EventHandlers>
             <Windows>
+              <Window name="DevPadCopy" layer="overlay" movable="false" savesettings="false">
+                <Size>
+                    <AbsPoint x="780" y="390" />
+                </Size>
+                <Anchors>
+                    <Anchor point="topleft" relativePoint="topleft" relativeTo="DebugWindowBackground">
+                        <AbsPoint x="10" y="10" />
+                    </Anchor>
+                    <Anchor point="topright" relativePoint="bottomright" relativeTo="DebugWindowLogDisplaySeperator">
+                        <AbsPoint x="-10" y="10" />
+                    </Anchor>
+                </Anchors>
+                <EventHandlers>
+                  <EventHandler event="OnShown" function="DebugWindow.OnShowCopy" />
+                  <EventHandler event="OnHidden" function="DebugWindow.OnHideCopy" />
+                </EventHandlers>
+                <Windows>
+
+
+
+                  <EditBox name="$parentLog" inherits="EA_EditBox_NoFrame" maxchars="163840" font="font_clear_small_bold"
+                    scrollbar="CopyScrollBar" autoHideScrollBar="true" handleinput="true" alpha="0.97" scrolling="vert">
+                    <Size>
+                          <AbsPoint x="780" y="390" />
+                    </Size>
+                    <TextOffset x="0" y="2" />
+                    <Anchors>
+                        <Anchor point="topleft" relativePoint="topleft" relativeTo="DebugWindowBackground">
+                            <AbsPoint x="10" y="10" />
+                        </Anchor>
+                        <Anchor point="bottomright" relativePoint="bottomright" relativeTo="DebugWindowLogDisplaySeperator">
+                            <AbsPoint x="-10" y="-10" />
+                        </Anchor>
+                    </Anchors>
+                    <EventHandlers>
+                      <EventHandler event="OnTextChanged" function="DebugWindow.PreventType" />
+                       <EventHandler event="OnKeyTab" function="DebugWindow.OnKeyTab" />
+                    </EventHandlers>
+                    <Windows>
+                      <VerticalScrollbar name="CopyScrollBar" inherits="EA_ScrollBar_ChatVertical" layer="popup">
+                        <Size>
+                          <AbsPoint x="20" y="600"/>
+                        </Size>
+                        <Anchors>
+                            <Anchor point="bottomright" relativePoint="bottomleft">
+                                <AbsPoint x="-24" y="-0" />
+                            </Anchor>
+                            <Anchor point="topright" relativePoint="topright"/>
+                            </Anchors>
+                      </VerticalScrollbar>
+                    </Windows>
+                  </EditBox>
+                </Windows>
+              </Window>
+              <!--busted-->
+            <!--end of busted-->
 
                 <Window name="$parentBackground" inherits="EA_Window_DefaultFrame" >
                         <Anchors>
@@ -56,7 +115,7 @@
 
 	                    <Windows>
 
-                        <VerticalScrollbar name="$parentScrollbar" inherits="EA_ScrollBar_ChatVertical" alpha="0.85">
+                        <VerticalScrollbar name="$parentScrollbar" inherits="EA_ScrollBar_ChatVertical" alpha="0.97">
                             <Anchors>
                                 <Anchor point="bottomright" relativePoint="bottomleft">
                                     <AbsPoint x="-24" y="-28" />
@@ -136,7 +195,7 @@
                     </Anchors>
                 </Window>
 
-                <EditBox name="$parentTextBox" inherits="EA_EditBox_DefaultFrame" maxchars="4096" history="30" font="font_clear_small_bold" alpha="0.85">
+                <EditBox name="$parentTextBox" inherits="EA_EditBox_DefaultFrame" maxchars="4096" history="30" font="font_clear_small_bold" alpha="0.97">
                   <Anchors>
                       <Anchor point="topleft" relativePoint="topleft" relativeTo="$parentLogDisplaySeperator">
                       <AbsPoint x="8" y="18" />
@@ -150,7 +209,8 @@
                     <EventHandler event="OnKeyEscape" function="DebugWindow.TextClear" />
                     <EventHandler event="OnTextChanged" function="DebugWindow.AutoSender" />
                     <EventHandler event="OnShown" function="DebugWindow.OnShowFocus" />
-                  </EventHandlers>
+                    <EventHandler event="OnKeyTab" function="DebugWindow.OnKeyTab" />
+                    </EventHandlers>
                 </EditBox>
 
                 <Window name="$parentLogDisplaySeperator2" inherits="EA_Window_DefaultFrame" handleinput="false" >
@@ -230,6 +290,19 @@
                         <EventHandler event="OnLButtonUp" function="InterfaceCore.ReloadUI"/>
                     </EventHandlers>
                 </Button>
+                <Button name="$parentToggleCopy" inherits="EA_Button_DefaultText"  font="font_clear_small_bold" textalign="center" alpha="0">
+                          <Size>
+                            <AbsPoint y="32" x="80"/>
+                          </Size>
+                            <Anchors>
+                                <Anchor point="topleft" relativePoint="topright" relativeTo="$parentToggleObject">
+                                    <AbsPoint x="-5" y="0" />
+                                </Anchor>
+                            </Anchors>
+                            <EventHandlers>
+                                <EventHandler event="OnLButtonUp" function="DebugWindow.CopyToggle"/>
+                            </EventHandlers>
+                        </Button>
                 <Button name="$parentToggleDevPad" inherits="EA_Button_DefaultText"  font="font_clear_small_bold" textalign="center" alpha="0">
                           <Size>
                             <AbsPoint y="32" x="80"/>
@@ -243,6 +316,19 @@
                                 <EventHandler event="OnLButtonUp" function="DevPadWindow.Toggle"/>
                             </EventHandlers>
                         </Button>
+                        <Button name="$parentToggleObject" inherits="EA_Button_DefaultText"  font="font_clear_small_bold" textalign="center" alpha="0">
+                                  <Size>
+                                    <AbsPoint y="32" x="70"/>
+                                  </Size>
+                                    <Anchors>
+                                        <Anchor point="topleft" relativePoint="topright" relativeTo="$parentToggleDevPad">
+                                            <AbsPoint x="-5" y="0" />
+                                        </Anchor>
+                                    </Anchors>
+                                    <EventHandlers>
+                                        <EventHandler event="OnLButtonUp" function="ObjectInspector.Toggle"/>
+                                    </EventHandlers>
+                                </Button>
                 <Button name="$parentToggleLogging" inherits="EA_Button_DefaultText"  font="font_clear_small_bold" textalign="center" alpha="0">
                   <Size>
                     <AbsPoint y="32" x="80"/>
@@ -262,7 +348,7 @@
                   </Size>
                     <Anchors>
                         <Anchor point="bottomright" relativePoint="bottomright" >
-                            <AbsPoint x="-125" y="-5" />
+                            <AbsPoint x="-80" y="-5" />
                         </Anchor>
                     </Anchors>
                     <EventHandlers>
@@ -294,7 +380,41 @@
                         <EventHandler event="OnLButtonDown" function="DebugWindow.OnResizeBegin" />
                     </EventHandlers>
                 </Button>
+                <Window name="BustedProxy" handleinput="false">
+                   <Size>
+                       <AbsPoint x="1" y="1" />
+                   </Size>
+                </Window>
+                <!--busted count-->
+                <Window name="$parentMiniGUI" handleinput="true" popable="false" savesettings="false">
+                   <Size>
+                       <AbsPoint x="100" y="30" />
+                   </Size>
+                   <Anchors>
+                       <Anchor point="bottomleft" relativePoint="bottomleft" relativeTo="DebugWindow">
+                          <AbsPoint x="120" y="-8" />
+                       </Anchor>
+                   </Anchors>
+                   <Windows>
+                       <Label name="$parentErrorText" font="font_clear_small_bold" textalign="center" layer="popup" popable="false" handleinput="false">
+                           <Size>
+                               <AbsPoint x="100" y="30" />
+                           </Size>
+                           <Anchors>
+                               <Anchor point="right" relativePoint="right" relativeTo="DebugWindowReloadUi">
+                                   <AbsPoint x="120" y="0" />
+                               </Anchor>
+                           </Anchors>
+                           <Color r="255" g="100" b="0" a="255" />
+                       </Label>
 
+                   </Windows>
+                   <EventHandlers>
+                     <EventHandler event="OnLButtonUp" function="BustedGUI.ToggleMainWindow" />
+                     <EventHandler event="OnRButtonUp" function="BustedGUI.ClearAlertFlash" />
+                   </EventHandlers>
+
+                </Window>
 
 
             </Windows>
@@ -302,9 +422,148 @@
 
 
 
+        <Window name="BustedGUI" handleinput="true" popable="true" layer="popup" savesettings="false" movable="false" alpha="0.97">
+           <Size>
+               <AbsPoint x="500" y="125" />
+           </Size>
+           <Anchors>
+               <Anchor point="bottomleft" relativePoint="bottomleft" relativeTo="DebugWindow">
+                  <AbsPoint x="0" y="125" />
+               </Anchor>
+               <Anchor point="bottomright" relativePoint="bottomright" relativeTo="DebugWindow">
+                  <AbsPoint x="0" y="125" />
+               </Anchor>
+           </Anchors>
+
+           <Windows>
+               <Window name="$parentBack" layer="background" inherits="EA_Window_DefaultFrame" handleinput="false" alpha="0.97">
+                   <Anchors>
+                       <Anchor point="topleft" relativePoint="topleft" relativeTo="$parent" />
+                       <Anchor point="bottomright" relativePoint="bottomright" relativeTo="$parent" />
+                   </Anchors>
+               </Window>
+
+               <Label name="$parentAddonText" font="font_clear_small_bold" textalign="center" layer="popup" popable="false" handleinput="false">
+                   <Size>
+                       <AbsPoint x="100" y="29" />
+                   </Size>
+                   <Anchors>
+                       <Anchor point="topleft" relativePoint="topleft" relativeTo="$parent">
+                           <AbsPoint x="-4" y="11" />
+                       </Anchor>
+                   </Anchors>
+                   <Color r="255" g="255" b="255" a="255" />
+               </Label>
+
+               <ComboBox name="$parentAddonSelect" inherits="EA_ComboBox_DefaultResizable3">
+                   <Size>
+                       <AbsPoint x="250" y="29" />
+                   </Size>
+                    <MenuButtonOffset x="12" y="5" />
+                   <Anchors>
+                       <Anchor point="right" relativePoint="left" relativeTo="$parentAddonText" />
+                   </Anchors>
+                   <EventHandlers>
+                       <EventHandler event="OnSelChanged" function="BustedGUI.SelectAddonView" />
+                   </EventHandlers>
+               </ComboBox>
+
+               <Button name="$parentPrevError" inherits="EA_Button_DefaultMinus" layer="popup">
+                   <Anchors>
+                       <Anchor point="right" relativePoint="left" relativeTo="$parentAddonSelect">
+                           <AbsPoint x="8" y="0" />
+                       </Anchor>
+                   </Anchors>
+                   <EventHandlers>
+                       <EventHandler event="OnLButtonUp" function="BustedGUI.SelectPrevError" />
+                   </EventHandlers>
+               </Button>
+
+               <Label name="$parentErrorText" font="font_clear_small_bold" textalign="center" layer="popup" popable="false" handleinput="false">
+                   <Size>
+                       <AbsPoint x="70" y="29" />
+                   </Size>
+                   <Anchors>
+                       <Anchor point="right" relativePoint="left" relativeTo="$parentPrevError">
+                           <AbsPoint x="4" y="0" />
+                       </Anchor>
+                   </Anchors>
+                   <Color r="255" g="255" b="255" a="255" />
+               </Label>
+
+               <Button name="$parentNextError" inherits="EA_Button_DefaultPlus" layer="popup">
+                   <Anchors>
+                       <Anchor point="right" relativePoint="left" relativeTo="$parentErrorText">
+                           <AbsPoint x="4" y="0" />
+                       </Anchor>
+                   </Anchors>
+                   <EventHandlers>
+                       <EventHandler event="OnLButtonUp" function="BustedGUI.SelectNextError" />
+                   </EventHandlers>
+               </Button>
+
+               <FullResizeImage name="$parentCountBackground" inherits="EA_FullResizeImage_TanBorder" handleinput="false" layer="default">
+                   <Anchors>
+                       <Anchor point="topleft" relativePoint="topleft" relativeTo="$parentPrevError">
+                           <AbsPoint x="-5" y="-5" />
+                       </Anchor>
+                       <Anchor point="bottomright" relativePoint="bottomright" relativeTo="$parentNextError">
+                           <AbsPoint x="5" y="5" />
+                       </Anchor>
+                   </Anchors>
+               </FullResizeImage>
+
+               <EditBox name="$parentErrorMessage" inherits="EA_EditBox_DefaultFrame_Multiline" maxchars="76000"
+                   font="font_clear_small_bold" wordwrap="false" handleinput="true">
+                   <Anchors>
+                       <Anchor point="bottomleft" relativePoint="topleft" relativeTo="$parentAddonText">
+                           <AbsPoint x="12" y="4" />
+                       </Anchor>
+                       <Anchor point="bottomright" relativePoint="bottomright" relativeTo="$parent">
+                           <AbsPoint x="-10" y="-41" />
+                       </Anchor>
+                   </Anchors>
+               </EditBox>
+
+               <Label name="$parentTimeText" font="font_clear_small_bold" textalign="leftcenter" layer="default" popable="false" handleinput="false">
+                   <Size>
+                       <AbsPoint x="200" y="22" />
+                   </Size>
+                   <Anchors>
+                       <Anchor point="bottomleft" relativePoint="bottomleft" relativeTo="$parent">
+                           <AbsPoint x="16" y="-11" />
+                       </Anchor>
+                   </Anchors>
+                   <Color r="255" g="255" b="255" a="255" />
+               </Label>
+
+               <Label name="$parentRepeatText" font="font_clear_small_bold" textalign="rightcenter" layer="popup" popable="false" handleinput="false">
+                   <Size>
+                       <AbsPoint x="200" y="22" />
+                   </Size>
+                   <Anchors>
+                       <Anchor point="bottomright" relativePoint="bottomright" relativeTo="$parent">
+                           <AbsPoint x="-16" y="-11" />
+                       </Anchor>
+                   </Anchors>
+                   <Color r="255" g="255" b="255" a="255" />
+               </Label>
+
+           </Windows>
+
+        </Window>
+
+
+
+
+
+
+
+
+
 
         <!--DEV PAD WINDOW BEGIN -->
-      <Window name="DevPadWindow" movable="true" layer="popup" savesettings="true"  handleinput="true" alpha="0.85" >
+      <Window name="DevPadWindow" movable="true" layer="popup" savesettings="true"  handleinput="true" alpha="0.97" >
       <Size>
       <AbsPoint x="750" y="700" />
       </Size>
@@ -364,7 +623,7 @@
               </Window>
                   <Button name="$parentClose" inherits="EA_Button_DefaultText"  font="font_clear_small_bold" textalign="center" alpha="1">
                     <Size>
-                      <AbsPoint y="32" x="40"/>
+                      <AbsPoint y="32" x="50"/>
                     </Size>
                       <Anchors>
                           <Anchor point="bottomright" relativePoint="bottomright" >
@@ -452,7 +711,7 @@
                      </Anchors>
                  </Window>
                  <EditBox name="$parentDevPadCode" inherits="EA_EditBox_DefaultFrame_Multiline" maxchars="163840" font="font_clear_small_bold"
-                   scrollbar="$parentDevPadCodeScrollBar" autoHideScrollBar="true" handleinput="true" alpha="0.85">
+                   scrollbar="$parentDevPadCodeScrollBar" autoHideScrollBar="true" handleinput="true" alpha="0.97">
                    <Size>
                      <AbsPoint x="740" y="600" />
                    </Size>
@@ -488,8 +747,10 @@
              </EditBox>
 		      </Windows>
       </Window>
+
+
  <!-- END DEV PAD WINDOW -->
- <Window name="DevPadSaveWindow" movable="true" layer="popup" savesettings="false"  handleinput="true" alpha="0.85" >
+ <Window name="DevPadSaveWindow" movable="true" layer="popup" savesettings="false"  handleinput="true" alpha="0.97" >
 <Size>
 <AbsPoint x="230" y="140" />
 </Size>
@@ -553,7 +814,7 @@
               <EventHandler event="OnLButtonUp" function="DevPadWindow.SaveFile"/>
               </EventHandlers>
           </Button>
-  <EditBox name="$parentTextBox" inherits="EA_EditBox_DefaultFrame" maxchars="4096" history="30" font="font_clear_small_bold" alpha="0.85">
+  <EditBox name="$parentTextBox" inherits="EA_EditBox_DefaultFrame" maxchars="4096" history="30" font="font_clear_small_bold" alpha="0.97">
             <Anchors>
                 <Anchor point="topleft" relativePoint="topleft" relativeTo="">
                 <AbsPoint x="10" y="70" />
@@ -586,7 +847,7 @@
 
 
 <!-- DELETE WINDOW -->
-<Window name="DevPadDeleteWindow" movable="true" layer="popup" savesettings="false"  handleinput="true" alpha="0.85" >
+<Window name="DevPadDeleteWindow" movable="true" layer="popup" savesettings="false"  handleinput="true" alpha="0.97" >
 <Size>
 <AbsPoint x="250" y="130" />
 </Size>
@@ -670,7 +931,7 @@
 
 
 <!-- dev pad new window-->
-<Window name="DevPadNewWindow" movable="true" layer="popup" savesettings="false"  handleinput="true" alpha="0.85" >
+<Window name="DevPadNewWindow" movable="true" layer="popup" savesettings="false"  handleinput="true" alpha="0.97" >
 <Size>
 <AbsPoint x="230" y="140" />
 </Size>
@@ -735,7 +996,7 @@
              <EventHandler event="OnLButtonUp" function="DevPadWindow.CreateNewFile"/>
              </EventHandlers>
          </Button>
- <EditBox name="$parentTextBox" inherits="EA_EditBox_DefaultFrame" maxchars="4096" history="30" font="font_clear_small_bold" alpha="0.85">
+ <EditBox name="$parentTextBox" inherits="EA_EditBox_DefaultFrame" maxchars="4096" history="30" font="font_clear_small_bold" alpha="0.97">
            <Anchors>
                <Anchor point="topleft" relativePoint="topleft" relativeTo="">
                <AbsPoint x="10" y="70" />
@@ -768,7 +1029,7 @@
 
  <!--RENAME WINDOW-->
 
-<Window name="DevPadRenameWindow" movable="true" layer="popup" savesettings="false"  handleinput="true" alpha="0.85" >
+<Window name="DevPadRenameWindow" movable="true" layer="popup" savesettings="false"  handleinput="true" alpha="0.97" >
 <Size>
 <AbsPoint x="230" y="140" />
 </Size>
@@ -835,7 +1096,7 @@
              <EventHandler event="OnLButtonUp" function="DevPadWindow.ConfirmRename"/>
              </EventHandlers>
          </Button>
- <EditBox name="$parentTextBox" inherits="EA_EditBox_DefaultFrame" maxchars="4096" history="30" font="font_clear_small_bold" alpha="0.85">
+ <EditBox name="$parentTextBox" inherits="EA_EditBox_DefaultFrame" maxchars="4096" history="30" font="font_clear_small_bold" alpha="0.97">
            <Anchors>
                <Anchor point="topleft" relativePoint="topleft" relativeTo="">
                <AbsPoint x="10" y="70" />
@@ -869,7 +1130,7 @@
 
 
 <!-- PROJECT LOAD WINDOW -->
-<Window name="DevPadProjectLoad" movable="true" layer="popup" savesettings="false"  handleinput="true" alpha="0.85" >
+<Window name="DevPadProjectLoad" movable="true" layer="popup" savesettings="false"  handleinput="true" alpha="0.97" >
 <Size>
 <AbsPoint x="230" y="140" />
 </Size>
@@ -983,7 +1244,7 @@
 
 
 <!--DEV PAD CONFIRM LOAD WINDOW -->
-<Window name="DevPadConfirmLoad" movable="true" layer="popup" savesettings="false"  handleinput="true" alpha="0.85" >
+<Window name="DevPadConfirmLoad" movable="true" layer="popup" savesettings="false"  handleinput="true" alpha="0.97" >
 <Size>
 <AbsPoint x="320" y="140" />
 </Size>
@@ -1082,7 +1343,7 @@
 
 
         <!--- Options Window -->
-        <Window name="DebugWindowOptions" layer="overlay" movable="false" alpha="0.85">
+        <Window name="DebugWindowOptions" layer="overlay" movable="false" alpha="0.97">
             <Size>
                 <AbsPoint x="310" y="500" />
             </Size>

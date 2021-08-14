@@ -1,6 +1,9 @@
 ----------------------------------------------------------------
 -- Debugging Assistance Variables
 ----------------------------------------------------------------
+local dump=false;
+
+
 TextLogAddFilterType ("UiLog", 11, L"[Event]:")
 
 --------------------------------------
@@ -14,7 +17,11 @@ end
 
 --------- PRINTING TO TERMINAL
 function PRINT( text )
- TextLogAddEntry( "UiLog", 10, text )
+  if not dump then
+    TextLogAddEntry( "UiLog", 10, text )
+  elseif dump then
+    TextLogAddEntry( DevPad_Settings.Logdump, 1, (text))
+  end
 end
 --------------------------------
 ---------- inp() HANDLE---- ----
@@ -170,7 +177,6 @@ end
 dt = DUMP_TABLE;
 pt = PRINT_TABLE;
 inp = INPUT;
-
 -- do you ever get sick of typing DEBUG (L""...), I know I do...
 function d (...)
     for msgIndex, message in ipairs (arg)
@@ -336,6 +342,7 @@ function p(...)
         pp("nil")
       elseif (text ~= nil) then
         print(table.concat(t))
+        return p
   end
 end
 
@@ -515,6 +522,28 @@ function hw(text)
         end
     end
 end
+
+
+--------------------------------LOGDUMP------------------------------------
+function logdump(name, ...)
+ local testing=false;
+      if name==nil or (...)==nil then testing=true;
+        else testing=false
+      end
+      if testing then pp("Usage: logdump(\"logname\", arguments)")
+     else
+	      dump=true;
+        DevPad_Settings.Logdump=name
+  	    TextLogCreate(tostring(name),50000)
+	      TextLogSetIncrementalSaving(name, true, StringToWString("logs/"..name..".log"))
+		    p(...)
+			  dump=false;
+        pp("\""..name.."\" saved to logs/"..name..".log")
+      end
+		end
+
+
+
 
 
 ---------------------------------------------------------------------
